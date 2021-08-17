@@ -2,36 +2,38 @@ package pubsub
 
 import (
 	"fmt"
-	"github.com/softmmelier/gamma/app"
-	"log"
+	"github.com/softmmelier/gamma/v0/app"
+	"github.com/softmmelier/gamma/v0/dependencies"
 )
 
 const (
 	pkgSubName = "Transport/PubSub/Subscriber"
 )
 
-type Subscribe interface {
+type Subscription interface {
 	Topics() []string
 	Handler(string, []byte)
 }
 
 type Subscriber interface {
-	app.Service
-	Subscribe(Subscribe)
+	app.Runner
+	Subscribe(Subscription) error
 }
 
 type SubscriberConfig struct {
-	RedisClientConfig
+	dependencies.RedisClientConfig
 }
 
 type Sub struct {
 	config SubscriberConfig
+	h      dependencies.Redis
 }
 
 //NewSubscriber new redis subscriber
 func NewSubscriber(c SubscriberConfig) Subscriber {
 	return &Sub{
 		config: c,
+		h:      dependencies.NewRedisClient(c.RedisClientConfig),
 	}
 }
 
@@ -39,12 +41,21 @@ func (sub Sub) Name() string {
 	return pkgSubName
 }
 
-func (sub Sub) Run() {
-	fmt.Println(pkgSubName, "== No runner")
+func (sub Sub) Run()  {
+	fmt.Println("Run subscriber")
 }
 
-func (sub Sub) Subscribe(subscribe Subscribe) {
-	for _, topic := range subscribe.Topics() {
-		log.Println("Subscribe ->", topic)
+func (sub Sub) Subscribe(s Subscription) error {
+	for _, topic := range s.Topics() {
+		t := sub.h.Handler().Subscribe(sub.h.Context(), topic)
+		channel := t.Channel()
+
+		go func() {
+			for msg := range channel {
+				s.Handler(msg.Channel, []byte(msg.Payload))
+			}
+		}()
 	}
+
+	return nil
 }
