@@ -1,10 +1,11 @@
-package pubsub
+package dependencies
 
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type Redis interface {
@@ -56,12 +57,12 @@ func NewRedisClient(c RedisClientConfig) Redis {
 	}
 }
 
-// Handle redis requested action
+// Handler redis requested action
 func (c *RedisClient) Handler() *redis.Client {
 	return c.handler
 }
 
-// Context for current client instace
+// Context for current client instance
 func (c *RedisClient) Context() context.Context {
 	return c.ctx
 }

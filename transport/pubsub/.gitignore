@@ -1,6 +1,0 @@
-bin/*
-!bin/migrate
-vendor/*
-!vendor/modules.txt
-config.json
-__debug_bin
